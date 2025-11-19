@@ -38,14 +38,18 @@ import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
 
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public class AvroMapper {
 
     public SensorEventAvro toAvro(SensorEvent event) {
-        var builder = SensorEventAvro.newBuilder()
-                .setId(event.getId())
-                .setHubId(event.getHubId())
-                .setTimestamp(event.getTimestamp().toEpochMilli());
+        try {
+            var builder = SensorEventAvro.newBuilder()
+                    .setId(event.getId())
+                    .setHubId(event.getHubId())
+                    .setTimestamp(event.getTimestamp().toEpochMilli());
 
         Object payload;
         switch (event) {
@@ -56,12 +60,8 @@ public class AvroMapper {
                     .build();
             case LightSensorEvent lightEvent -> {
                 var lightBuilder = LightSensorAvro.newBuilder();
-                if (lightEvent.getLinkQuality() != null) {
-                    lightBuilder.setLinkQuality(lightEvent.getLinkQuality());
-                }
-                if (lightEvent.getLuminosity() != null) {
-                    lightBuilder.setLuminosity(lightEvent.getLuminosity());
-                }
+                lightBuilder.setLinkQuality(lightEvent.getLinkQuality() != null ? lightEvent.getLinkQuality() : 0);
+                lightBuilder.setLuminosity(lightEvent.getLuminosity() != null ? lightEvent.getLuminosity() : 0);
                 payload = lightBuilder.build();
             }
             case MotionSensorEvent motionEvent -> payload = MotionSensorAvro.newBuilder()
@@ -79,13 +79,18 @@ public class AvroMapper {
             default -> throw new IllegalArgumentException("Unknown sensor event type: " + event.getClass());
         }
 
-        return builder.setPayload(payload).build();
+            return builder.setPayload(payload).build();
+        } catch (Exception e) {
+            log.error("Error converting sensor event to Avro: {}", event, e);
+            throw new RuntimeException("Failed to convert sensor event to Avro", e);
+        }
     }
 
     public HubEventAvro toAvro(HubEvent event) {
-        var builder = HubEventAvro.newBuilder()
-                .setHubId(event.getHubId())
-                .setTimestamp(event.getTimestamp().toEpochMilli());
+        try {
+            var builder = HubEventAvro.newBuilder()
+                    .setHubId(event.getHubId())
+                    .setTimestamp(event.getTimestamp().toEpochMilli());
 
         Object payload = switch (event) {
             case DeviceAddedEvent deviceAdded -> DeviceAddedEventAvro.newBuilder()
@@ -110,7 +115,11 @@ public class AvroMapper {
             default -> throw new IllegalArgumentException("Unknown hub event type: " + event.getClass());
         };
 
-        return builder.setPayload(payload).build();
+            return builder.setPayload(payload).build();
+        } catch (Exception e) {
+            log.error("Error converting hub event to Avro: {}", event, e);
+            throw new RuntimeException("Failed to convert hub event to Avro", e);
+        }
     }
 
     private DeviceTypeAvro mapDeviceType(DeviceType type) {
@@ -176,4 +185,3 @@ public class AvroMapper {
         return builder.build();
     }
 }
-
