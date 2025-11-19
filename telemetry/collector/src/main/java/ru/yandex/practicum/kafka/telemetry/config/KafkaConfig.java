@@ -56,4 +56,3 @@ public class KafkaConfig {
         return new KafkaTemplate<>(hubEventProducerFactory());
     }
 }
-
