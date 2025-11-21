@@ -11,7 +11,7 @@ import ru.yandex.practicum.grpc.telemetry.HubEventProto;
 import ru.yandex.practicum.grpc.telemetry.SensorEventProto;
 import ru.yandex.practicum.kafka.telemetry.mapper.ProtobufMapper;
 import ru.yandex.practicum.kafka.telemetry.service.CollectorService;
-import telemetry.services.CollectorControllerGrpc;
+import telemetry.service.collector.CollectorControllerGrpc;
 
 @Slf4j
 @GrpcService
