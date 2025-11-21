@@ -1,40 +1,8 @@
 package ru.yandex.practicum.kafka.telemetry.mapper;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.kafka.telemetry.dto.ActionType;
-import ru.yandex.practicum.kafka.telemetry.dto.ConditionOperation;
-import ru.yandex.practicum.kafka.telemetry.dto.ConditionType;
-import ru.yandex.practicum.kafka.telemetry.dto.DeviceType;
-import ru.yandex.practicum.kafka.telemetry.dto.HubEvent;
-import ru.yandex.practicum.kafka.telemetry.dto.SensorEvent;
-import ru.yandex.practicum.kafka.telemetry.dto.ClimateSensorEvent;
-import ru.yandex.practicum.kafka.telemetry.dto.DeviceAction;
-import ru.yandex.practicum.kafka.telemetry.dto.DeviceAddedEvent;
-import ru.yandex.practicum.kafka.telemetry.dto.DeviceRemovedEvent;
-import ru.yandex.practicum.kafka.telemetry.dto.LightSensorEvent;
-import ru.yandex.practicum.kafka.telemetry.dto.MotionSensorEvent;
-import ru.yandex.practicum.kafka.telemetry.dto.ScenarioAddedEvent;
-import ru.yandex.practicum.kafka.telemetry.dto.ScenarioCondition;
-import ru.yandex.practicum.kafka.telemetry.dto.ScenarioRemovedEvent;
-import ru.yandex.practicum.kafka.telemetry.dto.SwitchSensorEvent;
-import ru.yandex.practicum.kafka.telemetry.dto.TemperatureSensorEvent;
-import ru.yandex.practicum.kafka.telemetry.event.ActionTypeAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ClimateSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ConditionOperationAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ConditionTypeAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceActionAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceAddedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceRemovedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceTypeAvro;
-import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.LightSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.MotionSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioConditionAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioRemovedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SwitchSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
+import ru.yandex.practicum.kafka.telemetry.dto.*;
+import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.util.stream.Collectors;
 

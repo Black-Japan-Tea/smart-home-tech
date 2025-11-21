@@ -15,4 +15,3 @@ kafka:
 logging:
   level:
     ru.yandex.practicum.kafka.telemetry: DEBUG
-
