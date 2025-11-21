@@ -183,6 +183,9 @@ public class ProtobufMapper {
         
         if (proto.getValueCase() == ScenarioConditionProto.ValueCase.INT_VALUE) {
             condition.setValue(proto.getIntValue());
+        } else if (proto.getValueCase() == ScenarioConditionProto.ValueCase.BOOL_VALUE) {
+            // Преобразуем boolean в Integer: true -> 1, false -> 0
+            condition.setValue(proto.getBoolValue() ? 1 : 0);
         }
         
         return condition;
