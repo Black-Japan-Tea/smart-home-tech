@@ -31,3 +31,4 @@ public class AvroSerializer implements Serializer<org.apache.avro.specific.Speci
     }
 }
 
+

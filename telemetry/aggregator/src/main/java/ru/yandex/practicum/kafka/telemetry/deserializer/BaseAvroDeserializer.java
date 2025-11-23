@@ -41,3 +41,4 @@ public class BaseAvroDeserializer<T extends SpecificRecordBase> implements Deser
     }
 }
 
+

@@ -8,3 +8,4 @@ public class SensorEventDeserializer extends BaseAvroDeserializer<SensorEventAvr
     }
 }
 
+

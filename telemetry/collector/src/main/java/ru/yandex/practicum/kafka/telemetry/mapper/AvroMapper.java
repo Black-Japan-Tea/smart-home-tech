@@ -38,52 +38,52 @@ public class AvroMapper {
                     .setTimestamp(event.getTimestamp().toEpochMilli());
 
         Object payload;
-        if (event instanceof ClimateSensorEvent) {
-            ClimateSensorEvent climateEvent = (ClimateSensorEvent) event;
-            if (climateEvent.getTemperatureC() == null || climateEvent.getHumidity() == null || climateEvent.getCo2Level() == null) {
-                throw new IllegalArgumentException("Climate sensor event fields cannot be null");
+            switch (event) {
+                case ClimateSensorEvent climateEvent -> {
+                    if (climateEvent.getTemperatureC() == null || climateEvent.getHumidity() == null || climateEvent.getCo2Level() == null) {
+                        throw new IllegalArgumentException("Climate sensor event fields cannot be null");
+                    }
+                    payload = ClimateSensorAvro.newBuilder()
+                            .setTemperatureC(climateEvent.getTemperatureC())
+                            .setHumidity(climateEvent.getHumidity())
+                            .setCo2Level(climateEvent.getCo2Level())
+                            .build();
+                }
+                case LightSensorEvent lightEvent -> {
+                    LightSensorAvro.Builder lightBuilder = LightSensorAvro.newBuilder();
+                    lightBuilder.setLinkQuality(lightEvent.getLinkQuality() != null ? lightEvent.getLinkQuality() : 0);
+                    lightBuilder.setLuminosity(lightEvent.getLuminosity() != null ? lightEvent.getLuminosity() : 0);
+                    payload = lightBuilder.build();
+                }
+                case MotionSensorEvent motionEvent -> {
+                    if (motionEvent.getLinkQuality() == null || motionEvent.getMotion() == null || motionEvent.getVoltage() == null) {
+                        throw new IllegalArgumentException("Motion sensor event fields cannot be null");
+                    }
+                    payload = MotionSensorAvro.newBuilder()
+                            .setLinkQuality(motionEvent.getLinkQuality())
+                            .setMotion(motionEvent.getMotion())
+                            .setVoltage(motionEvent.getVoltage())
+                            .build();
+                }
+                case SwitchSensorEvent switchEvent -> {
+                    if (switchEvent.getState() == null) {
+                        throw new IllegalArgumentException("Switch sensor event state cannot be null");
+                    }
+                    payload = SwitchSensorAvro.newBuilder()
+                            .setState(switchEvent.getState())
+                            .build();
+                }
+                case TemperatureSensorEvent tempEvent -> {
+                    if (tempEvent.getTemperatureC() == null || tempEvent.getTemperatureF() == null) {
+                        throw new IllegalArgumentException("Temperature sensor event fields cannot be null");
+                    }
+                    payload = TemperatureSensorAvro.newBuilder()
+                            .setTemperatureC(tempEvent.getTemperatureC())
+                            .setTemperatureF(tempEvent.getTemperatureF())
+                            .build();
+                }
+                default -> throw new IllegalArgumentException("Unknown sensor event type: " + event.getClass());
             }
-            payload = ClimateSensorAvro.newBuilder()
-                    .setTemperatureC(climateEvent.getTemperatureC())
-                    .setHumidity(climateEvent.getHumidity())
-                    .setCo2Level(climateEvent.getCo2Level())
-                    .build();
-        } else if (event instanceof LightSensorEvent) {
-            LightSensorEvent lightEvent = (LightSensorEvent) event;
-            LightSensorAvro.Builder lightBuilder = LightSensorAvro.newBuilder();
-            lightBuilder.setLinkQuality(lightEvent.getLinkQuality() != null ? lightEvent.getLinkQuality() : 0);
-            lightBuilder.setLuminosity(lightEvent.getLuminosity() != null ? lightEvent.getLuminosity() : 0);
-            payload = lightBuilder.build();
-        } else if (event instanceof MotionSensorEvent) {
-            MotionSensorEvent motionEvent = (MotionSensorEvent) event;
-            if (motionEvent.getLinkQuality() == null || motionEvent.getMotion() == null || motionEvent.getVoltage() == null) {
-                throw new IllegalArgumentException("Motion sensor event fields cannot be null");
-            }
-            payload = MotionSensorAvro.newBuilder()
-                    .setLinkQuality(motionEvent.getLinkQuality())
-                    .setMotion(motionEvent.getMotion())
-                    .setVoltage(motionEvent.getVoltage())
-                    .build();
-        } else if (event instanceof SwitchSensorEvent) {
-            SwitchSensorEvent switchEvent = (SwitchSensorEvent) event;
-            if (switchEvent.getState() == null) {
-                throw new IllegalArgumentException("Switch sensor event state cannot be null");
-            }
-            payload = SwitchSensorAvro.newBuilder()
-                    .setState(switchEvent.getState())
-                    .build();
-        } else if (event instanceof TemperatureSensorEvent) {
-            TemperatureSensorEvent tempEvent = (TemperatureSensorEvent) event;
-            if (tempEvent.getTemperatureC() == null || tempEvent.getTemperatureF() == null) {
-                throw new IllegalArgumentException("Temperature sensor event fields cannot be null");
-            }
-            payload = TemperatureSensorAvro.newBuilder()
-                    .setTemperatureC(tempEvent.getTemperatureC())
-                    .setTemperatureF(tempEvent.getTemperatureF())
-                    .build();
-        } else {
-            throw new IllegalArgumentException("Unknown sensor event type: " + event.getClass());
-        }
 
             return builder.setPayload(payload).build();
         } catch (Exception e) {
@@ -112,21 +112,15 @@ public class AvroMapper {
                     .setHubId(event.getHubId())
                     .setTimestamp(event.getTimestamp().toEpochMilli());
 
-        Object payload;
-        if (event instanceof DeviceAddedEvent) {
-            DeviceAddedEvent deviceAdded = (DeviceAddedEvent) event;
-            payload = DeviceAddedEventAvro.newBuilder()
+        Object payload = switch (event) {
+            case DeviceAddedEvent deviceAdded -> DeviceAddedEventAvro.newBuilder()
                     .setId(deviceAdded.getId())
                     .setType(mapDeviceType(deviceAdded.getDeviceType()))
                     .build();
-        } else if (event instanceof DeviceRemovedEvent) {
-            DeviceRemovedEvent deviceRemoved = (DeviceRemovedEvent) event;
-            payload = DeviceRemovedEventAvro.newBuilder()
+            case DeviceRemovedEvent deviceRemoved -> DeviceRemovedEventAvro.newBuilder()
                     .setId(deviceRemoved.getId())
                     .build();
-        } else if (event instanceof ScenarioAddedEvent) {
-            ScenarioAddedEvent scenarioAdded = (ScenarioAddedEvent) event;
-            payload = ScenarioAddedEventAvro.newBuilder()
+            case ScenarioAddedEvent scenarioAdded -> ScenarioAddedEventAvro.newBuilder()
                     .setName(scenarioAdded.getName())
                     .setConditions(scenarioAdded.getConditions().stream()
                             .map(this::mapCondition)
@@ -135,14 +129,11 @@ public class AvroMapper {
                             .map(this::mapAction)
                             .collect(Collectors.toList()))
                     .build();
-        } else if (event instanceof ScenarioRemovedEvent) {
-            ScenarioRemovedEvent scenarioRemoved = (ScenarioRemovedEvent) event;
-            payload = ScenarioRemovedEventAvro.newBuilder()
+            case ScenarioRemovedEvent scenarioRemoved -> ScenarioRemovedEventAvro.newBuilder()
                     .setName(scenarioRemoved.getName())
                     .build();
-        } else {
-            throw new IllegalArgumentException("Unknown hub event type: " + event.getClass());
-        }
+            default -> throw new IllegalArgumentException("Unknown hub event type: " + event.getClass());
+        };
 
             return builder.setPayload(payload).build();
         } catch (Exception e) {
