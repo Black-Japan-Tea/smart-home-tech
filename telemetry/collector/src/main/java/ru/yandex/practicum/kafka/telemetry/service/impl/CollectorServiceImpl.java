@@ -22,12 +22,25 @@ public class CollectorServiceImpl implements CollectorService {
     @Override
     public void collectSensorEvent(SensorEvent event) {
         try {
-            log.debug("Received sensor event: {}", event);
+            log.debug("Received sensor event: type={}, id={}, hubId={}", 
+                    event != null ? event.getClass().getSimpleName() : "null",
+                    event != null ? event.getId() : "null",
+                    event != null ? event.getHubId() : "null");
             SensorEventAvro avroEvent = avroMapper.toAvro(event);
+            log.debug("Converted to Avro: id={}, hubId={}", 
+                    avroEvent != null ? avroEvent.getId() : "null",
+                    avroEvent != null ? avroEvent.getHubId() : "null");
             kafkaProducerService.sendSensorEvent(avroEvent);
-            log.debug("Successfully processed sensor event: {}", event.getId());
+            log.debug("Successfully processed sensor event: {}", event != null ? event.getId() : "null");
         } catch (Exception e) {
-            log.error("Error processing sensor event: {}", event, e);
+            log.error("Error processing sensor event: type={}, id={}, hubId={}, error={}", 
+                    event != null ? event.getClass().getSimpleName() : "null",
+                    event != null ? event.getId() : "null",
+                    event != null ? event.getHubId() : "null",
+                    e.getClass().getSimpleName() + ": " + (e.getMessage() != null ? e.getMessage() : ""), e);
+            if (e.getCause() != null) {
+                log.error("Caused by: {}", e.getCause().getMessage(), e.getCause());
+            }
             throw e;
         }
     }

@@ -86,10 +86,10 @@ public class ProtobufMapper {
         String id = proto.getId();
         String hubId = proto.getHubId();
         
-        if (id.isEmpty()) {
+        if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("Sensor event id cannot be null or empty");
         }
-        if (hubId.isEmpty()) {
+        if (hubId == null || hubId.isEmpty()) {
             throw new IllegalArgumentException("Sensor event hubId cannot be null or empty");
         }
         
@@ -147,7 +147,7 @@ public class ProtobufMapper {
 
         String hubId = proto.getHubId();
         
-        if (hubId.isEmpty()) {
+        if (hubId == null || hubId.isEmpty()) {
             throw new IllegalArgumentException("Hub event hubId cannot be null or empty");
         }
         
