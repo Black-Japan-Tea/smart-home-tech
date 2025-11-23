@@ -32,7 +32,8 @@ public class SnapshotAggregator {
         SensorStateAvro previousState = states.get(sensorId);
 
         if (previousState != null) {
-            if (eventTimestamp <= previousState.getTimestamp()) {
+            long previousTimestamp = previousState.getTimestamp();
+            if (eventTimestamp <= previousTimestamp) {
                 return Optional.empty();
             }
             if (Objects.equals(previousState.getData(), event.getPayload())) {
