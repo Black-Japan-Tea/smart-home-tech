@@ -35,10 +35,15 @@ public class ProtobufMapper {
     private final AvroMapper avroMapper;
 
     public SensorEvent toDto(SensorEventProto proto) {
-        Instant timestamp = Instant.ofEpochSecond(
-                proto.getTimestamp().getSeconds(),
-                proto.getTimestamp().getNanos()
-        );
+        Instant timestamp;
+        if (proto.hasTimestamp()) {
+            timestamp = Instant.ofEpochSecond(
+                    proto.getTimestamp().getSeconds(),
+                    proto.getTimestamp().getNanos()
+            );
+        } else {
+            timestamp = Instant.now();
+        }
 
         SensorEvent event;
         SensorEventProto.PayloadCase payloadCase = proto.getPayloadCase();
@@ -86,10 +91,15 @@ public class ProtobufMapper {
     }
 
     public HubEvent toDto(HubEventProto proto) {
-        Instant timestamp = Instant.ofEpochSecond(
-                proto.getTimestamp().getSeconds(),
-                proto.getTimestamp().getNanos()
-        );
+        Instant timestamp;
+        if (proto.hasTimestamp()) {
+            timestamp = Instant.ofEpochSecond(
+                    proto.getTimestamp().getSeconds(),
+                    proto.getTimestamp().getNanos()
+            );
+        } else {
+            timestamp = Instant.now();
+        }
 
         HubEvent event;
         HubEventProto.PayloadCase payloadCase = proto.getPayloadCase();

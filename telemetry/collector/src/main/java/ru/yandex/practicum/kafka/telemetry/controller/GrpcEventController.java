@@ -2,7 +2,6 @@ package ru.yandex.practicum.kafka.telemetry.controller;
 
 import com.google.protobuf.Empty;
 import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,11 +34,11 @@ public class GrpcEventController extends CollectorControllerGrpc.CollectorContro
             log.debug("Successfully processed sensor event: {}", request.getId());
         } catch (Exception e) {
             log.error("Error processing sensor event: {}", request.getId(), e);
-            responseObserver.onError(new StatusRuntimeException(
-                    Status.INTERNAL
-                            .withDescription(e.getLocalizedMessage())
-                            .withCause(e)
-            ));
+            String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription(errorMessage)
+                    .withCause(e)
+                    .asRuntimeException());
         }
     }
 
@@ -55,11 +54,11 @@ public class GrpcEventController extends CollectorControllerGrpc.CollectorContro
             log.debug("Successfully processed hub event: {}", request.getHubId());
         } catch (Exception e) {
             log.error("Error processing hub event: {}", request.getHubId(), e);
-            responseObserver.onError(new StatusRuntimeException(
-                    Status.INTERNAL
-                            .withDescription(e.getLocalizedMessage())
-                            .withCause(e)
-            ));
+            String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription(errorMessage)
+                    .withCause(e)
+                    .asRuntimeException());
         }
     }
 }
