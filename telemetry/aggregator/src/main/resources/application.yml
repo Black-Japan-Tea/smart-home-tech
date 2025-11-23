@@ -1,0 +1,13 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+aggregator:
+  topics:
+    sensors-topic: telemetry.sensors.v1
+    snapshots-topic: telemetry.snapshots.v1
+  consumer:
+    group-id: telemetry-aggregator
+    client-id: telemetry-aggregator
+    poll-timeout: 1s
+
