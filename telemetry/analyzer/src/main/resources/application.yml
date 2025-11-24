@@ -31,14 +31,6 @@ kafka:
     snapshots:
       group-id: analyzer-snapshots-group
 
-grpc:
-  client:
-    hub-router:
-      address: 'static://localhost:59090'
-      enableKeepAlive: true
-      keepAliveWithoutCalls: true
-      negotiationType: plaintext
-
 logging:
   level:
     ru.yandex.practicum.kafka.telemetry: INFO
