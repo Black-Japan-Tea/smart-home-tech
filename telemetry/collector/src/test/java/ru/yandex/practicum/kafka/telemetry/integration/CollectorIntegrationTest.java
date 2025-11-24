@@ -48,10 +48,10 @@ class CollectorIntegrationTest {
 
     /**
      * Тест воссоздает ситуацию, когда Hub Router отправляет DEVICE_ADDED с UNSPECIFIED типом.
-     * Ожидается, что событие будет пропущено и не сохранится в Kafka.
+     * Ожидается, что событие будет обработано с использованием значения по умолчанию (TEMPERATURE_SENSOR).
      */
     @Test
-    void shouldSkipDeviceAddedWithUnspecifiedType() {
+    void shouldProcessDeviceAddedWithUnspecifiedTypeUsingDefault() {
         // Создаем событие с UNSPECIFIED типом (как отправляет Hub Router)
         HubEventProto request = HubEventProto.newBuilder()
             .setHubId("hub-1")
@@ -65,8 +65,8 @@ class CollectorIntegrationTest {
         // Вызываем gRPC метод
         controller.collectHubEvent(request, responseObserver);
 
-        // Проверяем, что событие НЕ было обработано (не вызван collectorService)
-        verify(collectorService, never()).collectHubEvent(any());
+        // Проверяем, что событие БЫЛО обработано (вызван collectorService)
+        verify(collectorService).collectHubEvent(any());
         
         // Проверяем, что ответ был успешным (не было ошибки)
         verify(responseObserver).onNext(Empty.getDefaultInstance());
@@ -76,10 +76,10 @@ class CollectorIntegrationTest {
 
     /**
      * Тест воссоздает ситуацию, когда Hub Router отправляет SCENARIO_ADDED с UNSPECIFIED значениями.
-     * Ожидается, что событие будет пропущено и сценарий не сохранится в БД.
+     * Ожидается, что событие будет обработано с использованием значений по умолчанию.
      */
     @Test
-    void shouldSkipScenarioAddedWithUnspecifiedConditionType() {
+    void shouldProcessScenarioAddedWithUnspecifiedConditionTypeUsingDefault() {
         // Создаем событие с UNSPECIFIED в условии (как отправляет Hub Router)
         HubEventProto request = HubEventProto.newBuilder()
             .setHubId("hub-1")
@@ -98,8 +98,8 @@ class CollectorIntegrationTest {
         // Вызываем gRPC метод
         controller.collectHubEvent(request, responseObserver);
 
-        // Проверяем, что событие НЕ было обработано
-        verify(collectorService, never()).collectHubEvent(any());
+        // Проверяем, что событие БЫЛО обработано
+        verify(collectorService).collectHubEvent(any());
         
         // Проверяем, что ответ был успешным
         verify(responseObserver).onNext(Empty.getDefaultInstance());
@@ -109,9 +109,10 @@ class CollectorIntegrationTest {
 
     /**
      * Тест воссоздает ситуацию, когда Hub Router отправляет SCENARIO_ADDED с UNSPECIFIED в действии.
+     * Ожидается, что событие будет обработано с использованием значения по умолчанию (ACTIVATE).
      */
     @Test
-    void shouldSkipScenarioAddedWithUnspecifiedActionType() {
+    void shouldProcessScenarioAddedWithUnspecifiedActionTypeUsingDefault() {
         HubEventProto request = HubEventProto.newBuilder()
             .setHubId("hub-1")
             .setTimestamp(toTimestamp(Instant.now()))
@@ -127,7 +128,8 @@ class CollectorIntegrationTest {
 
         controller.collectHubEvent(request, responseObserver);
 
-        verify(collectorService, never()).collectHubEvent(any());
+        // Проверяем, что событие БЫЛО обработано
+        verify(collectorService).collectHubEvent(any());
         verify(responseObserver).onNext(Empty.getDefaultInstance());
         verify(responseObserver).onCompleted();
     }
