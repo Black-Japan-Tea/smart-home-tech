@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import ru.yandex.practicum.grpc.telemetry.DeviceActionRequest;
-import ru.yandex.practicum.grpc.telemetry.HubRouterControllerGrpc;
+import ru.yandex.practicum.grpc.telemetry.service.hubrouter.HubRouterControllerGrpc;
 import ru.yandex.practicum.kafka.telemetry.hubrouter.service.ActionLogService;
 
 @Slf4j

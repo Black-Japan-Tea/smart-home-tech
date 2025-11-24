@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.grpc.telemetry.DeviceActionProto;
-import ru.yandex.practicum.grpc.telemetry.HubRouterControllerGrpc;
+import ru.yandex.practicum.grpc.telemetry.service.hubrouter.HubRouterControllerGrpc;
 import ru.yandex.practicum.kafka.telemetry.entity.Action;
 import ru.yandex.practicum.kafka.telemetry.entity.Scenario;
 import ru.yandex.practicum.kafka.telemetry.entity.ScenarioAction;

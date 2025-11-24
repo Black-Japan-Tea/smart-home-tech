@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package telemetry;
 
-import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 option java_multiple_files = true;
@@ -140,18 +139,5 @@ message ClimateSensorProto {
 
 message SwitchSensorProto {
   bool state = 1;
-}
-
-// ---------------------------------------------------------------------------
-// Services
-// ---------------------------------------------------------------------------
-
-service CollectorController {
-  rpc CollectSensorEvent(SensorEventProto) returns (google.protobuf.Empty);
-  rpc CollectHubEvent(HubEventProto) returns (google.protobuf.Empty);
-}
-
-service HubRouterController {
-  rpc handleDeviceAction (DeviceActionRequest) returns (google.protobuf.Empty);
 }
 
