@@ -69,7 +69,6 @@ public class SnapshotProcessor {
             try {
                 consumer.commitSync();
             } catch (Exception ignored) {
-                // nothing to do
             }
             consumer.close();
         }

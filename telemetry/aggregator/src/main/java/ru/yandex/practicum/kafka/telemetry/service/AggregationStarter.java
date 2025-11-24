@@ -35,14 +35,8 @@ public class AggregationStarter {
     private final KafkaConsumer<String, SensorEventAvro> consumer;
     private final KafkaProducer<String, SensorsSnapshotAvro> producer;
 
-    // Хранилище снапшотов по hubId
     private final Map<String, SensorsSnapshotAvro> snapshots = new HashMap<>();
 
-    /**
-     * Метод для начала процесса агрегации данных.
-     * Подписывается на топики для получения событий от датчиков,
-     * формирует снимок их состояния и записывает в кафку.
-     */
     public void start() {
         try {
             log.info("Подписываемся на топик: {}", sensorsTopic);
@@ -50,7 +44,6 @@ public class AggregationStarter {
 
             log.info("Начинаем обработку событий от датчиков");
 
-            // Цикл обработки событий
             while (true) {
                 ConsumerRecords<String, SensorEventAvro> records = consumer.poll(Duration.ofMillis(100));
                 
@@ -70,21 +63,15 @@ public class AggregationStarter {
                     }
                 }
                 
-                // Фиксируем смещения после обработки батча
                 consumer.commitSync();
             }
 
         } catch (WakeupException ignored) {
-            // игнорируем - закрываем консьюмер и продюсер в блоке finally
             log.info("Получен сигнал WakeupException, завершаем обработку");
         } catch (Exception e) {
             log.error("Ошибка во время обработки событий от датчиков", e);
         } finally {
             try {
-                // Перед тем, как закрыть продюсер и консьюмер, нужно убедиться,
-                // что все сообщения, лежащие в буффере, отправлены и
-                // все оффсеты обработанных сообщений зафиксированы
-                
                 log.info("Сбрасываем буфер продюсера");
                 producer.flush();
                 
@@ -100,21 +87,13 @@ public class AggregationStarter {
         }
     }
 
-    /**
-     * Обновляет состояние снапшота на основе полученного события.
-     * 
-     * @param event событие от датчика
-     * @return Optional с обновленным снапшотом, если состояние изменилось, иначе empty
-     */
     Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
         String hubId = event.getHubId();
         String sensorId = event.getId();
         
-        // Проверяем, есть ли снапшот для event.getHubId()
         SensorsSnapshotAvro snapshot = snapshots.get(hubId);
         
         if (snapshot == null) {
-            // Если снапшота нет, создаем новый
             log.debug("Создаем новый снапшот для хаба: {}", hubId);
             Map<String, SensorStateAvro> sensorsState = new HashMap<>();
             SensorStateAvro sensorState = createSensorState(event);
@@ -130,23 +109,18 @@ public class AggregationStarter {
             return Optional.of(snapshot);
         }
         
-        // Если снапшот есть, проверяем данные для event.getId()
         Map<String, SensorStateAvro> sensorsState = new HashMap<>(snapshot.getSensorsState());
         SensorStateAvro oldState = sensorsState.get(sensorId);
         
         if (oldState != null) {
-            // Если данные есть, проверяем, нужно ли обновлять
             long oldTimestamp = oldState.getTimestamp();
             long eventTimestamp = event.getTimestamp();
             
-            // Если старое событие произошло позже, игнорируем новое
             if (oldTimestamp > eventTimestamp) {
                 log.debug("Игнорируем событие с более ранним timestamp для датчика: {}", sensorId);
                 return Optional.empty();
             }
             
-            // Проверяем, изменились ли данные
-            // Если timestamp одинаковый и данные одинаковые, не обновляем
             Object oldData = oldState.getData();
             Object newData = event.getPayload();
             if (oldData != null && newData != null && oldData.equals(newData)) {
@@ -155,7 +129,6 @@ public class AggregationStarter {
             }
         }
         
-        // Если дошли до сюда, значит пришли новые данные и снапшот нужно обновить
         SensorStateAvro sensorState = createSensorState(event);
         sensorsState.put(sensorId, sensorState);
         
@@ -169,9 +142,6 @@ public class AggregationStarter {
         return Optional.of(snapshot);
     }
 
-    /**
-     * Создает SensorStateAvro на основе события от датчика.
-     */
     private SensorStateAvro createSensorState(SensorEventAvro event) {
         return SensorStateAvro.newBuilder()
             .setTimestamp(event.getTimestamp())
