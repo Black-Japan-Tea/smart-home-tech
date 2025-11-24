@@ -39,6 +39,9 @@ public class HubEventProcessor implements Runnable {
             while (running) {
                 ConsumerRecords<String, HubEventAvro> records =
                         consumer.poll(Duration.ofMillis(pollTimeoutMs));
+                if (!records.isEmpty()) {
+                    log.debug("Hub events poll returned {} records", records.count());
+                }
 
                 for (ConsumerRecord<String, HubEventAvro> record : records) {
                     if (record.value() == null) {

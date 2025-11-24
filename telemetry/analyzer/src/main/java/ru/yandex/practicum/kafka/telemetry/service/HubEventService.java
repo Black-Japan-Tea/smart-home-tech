@@ -50,18 +50,22 @@ public class HubEventService {
     public void handle(HubEventAvro event) {
         Object payload = event.getPayload();
         if (payload instanceof DeviceAddedEventAvro deviceAdded) {
+            log.info("Registering device {} for hub {}", deviceAdded.getId(), event.getHubId());
             registerSensor(event.getHubId(), deviceAdded);
             return;
         }
         if (payload instanceof DeviceRemovedEventAvro deviceRemoved) {
+            log.info("Removing device {} for hub {}", deviceRemoved.getId(), event.getHubId());
             removeSensor(event.getHubId(), deviceRemoved);
             return;
         }
         if (payload instanceof ScenarioAddedEventAvro scenarioAdded) {
+            log.info("Upserting scenario {} for hub {}", scenarioAdded.getName(), event.getHubId());
             upsertScenario(event.getHubId(), scenarioAdded);
             return;
         }
         if (payload instanceof ScenarioRemovedEventAvro scenarioRemoved) {
+            log.info("Removing scenario {} for hub {}", scenarioRemoved.getName(), event.getHubId());
             removeScenario(event.getHubId(), scenarioRemoved);
             return;
         }
@@ -172,6 +176,7 @@ public class HubEventService {
         if (!actionIds.isEmpty()) {
             actionRepository.deleteAllById(actionIds);
         }
+        log.debug("Cleaned up {} condition bindings and {} action bindings for scenario {}", conditionIds.size(), actionIds.size(), scenarioId);
     }
 
     private void removeBindingsForSensor(String sensorId) {
@@ -192,6 +197,7 @@ public class HubEventService {
         if (!actionIds.isEmpty()) {
             actionRepository.deleteAllById(actionIds);
         }
+        log.debug("Removed sensor {} bindings: {} conditions, {} actions", sensorId, conditionIds.size(), actionIds.size());
     }
 
     private void ensureSensorsExist(String hubId, Set<String> sensorIds) {

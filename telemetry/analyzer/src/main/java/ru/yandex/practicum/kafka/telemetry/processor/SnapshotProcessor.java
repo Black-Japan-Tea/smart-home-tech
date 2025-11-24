@@ -45,6 +45,9 @@ public class SnapshotProcessor {
             while (running) {
                 ConsumerRecords<String, SensorsSnapshotAvro> records =
                         consumer.poll(Duration.ofMillis(pollTimeoutMs));
+                if (!records.isEmpty()) {
+                    log.debug("Snapshots poll returned {} records", records.count());
+                }
                 for (ConsumerRecord<String, SensorsSnapshotAvro> record : records) {
                     SensorsSnapshotAvro snapshot = record.value();
                     if (snapshot == null) {
@@ -79,6 +82,8 @@ public class SnapshotProcessor {
 
     private void handleSnapshot(SensorsSnapshotAvro snapshot) {
         String hubId = snapshot.getHubId();
+        int sensorStates = snapshot.getSensorsState() != null ? snapshot.getSensorsState().size() : 0;
+        log.info("Processing snapshot for hub {} with {} sensor states (ts={})", hubId, sensorStates, snapshot.getTimestamp());
         List<Scenario> scenarios = scenarioService.findByHubId(hubId);
         if (scenarios.isEmpty()) {
             log.debug("No scenarios configured for hub {}", hubId);
@@ -87,10 +92,11 @@ public class SnapshotProcessor {
 
         List<DeviceActionRequest> requests = evaluationService.evaluate(snapshot, scenarios);
         if (requests.isEmpty()) {
-            log.debug("Snapshot for hub {} did not trigger any scenario", hubId);
+            log.debug("Snapshot for hub {} did not trigger any scenario ({} scenarios loaded)", hubId, scenarios.size());
             return;
         }
 
+        log.info("Snapshot for hub {} triggered {} actions across {} scenarios", hubId, requests.size(), scenarios.size());
         requests.forEach(dispatcher::dispatch);
     }
 }

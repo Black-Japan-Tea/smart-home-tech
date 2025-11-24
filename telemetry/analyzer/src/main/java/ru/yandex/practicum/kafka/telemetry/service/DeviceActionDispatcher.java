@@ -16,7 +16,7 @@ public class DeviceActionDispatcher {
     public void dispatch(DeviceActionRequest request) {
         try {
             hubRouterClient.handleDeviceAction(request);
-            log.debug("Command for hub {} scenario {} sent", request.getHubId(), request.getScenarioName());
+            log.info("Dispatched action {} for hub {} scenario {}", request.getAction().getSensorId(), request.getHubId(), request.getScenarioName());
         } catch (Exception e) {
             log.error("Failed to send device action for hub {} scenario {}", request.getHubId(), request.getScenarioName(), e);
         }

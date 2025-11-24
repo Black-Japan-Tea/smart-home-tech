@@ -44,6 +44,7 @@ public class ScenarioEvaluationService {
         List<DeviceActionRequest> requests = new ArrayList<>();
         for (Scenario scenario : scenarios) {
             if (matchesAllConditions(scenario, states)) {
+                log.info("Scenario '{}' for hub {} satisfied conditions", scenario.getName(), hubId);
                 for (ScenarioActionBinding binding : scenario.getActions()) {
                     DeviceActionProto actionProto = buildActionProto(binding);
                     DeviceActionRequest request =
@@ -56,6 +57,9 @@ public class ScenarioEvaluationService {
                     requests.add(request);
                 }
             }
+        }
+        if (requests.isEmpty()) {
+            log.debug("No scenarios satisfied for hub {}", hubId);
         }
         return requests;
     }
@@ -72,6 +76,11 @@ public class ScenarioEvaluationService {
                 return false;
             }
             if (!binding.getCondition().getOperation().matches(actualValue, expectedValue)) {
+                log.debug("Scenario '{}' condition failed for sensor {}: actual={}, expected={}",
+                        scenario.getName(),
+                        binding.getSensor().getId(),
+                        actualValue,
+                        expectedValue);
                 return false;
             }
         }
