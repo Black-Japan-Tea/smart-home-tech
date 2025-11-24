@@ -72,7 +72,7 @@ enum ActionTypeProto {
 message DeviceActionProto {
   string sensor_id = 1; // идентификатор устройства
   ActionTypeProto type = 2;
-  optional int32 value = 3;
+  int32 value = 3;
 }
 
 message ScenarioAddedEventProto {
@@ -83,4 +83,11 @@ message ScenarioAddedEventProto {
 
 message ScenarioRemovedEventProto {
   string name = 1; // название сценария уникальное в рамках хаба
+}
+
+message DeviceActionRequest {
+  string hub_id = 1;
+  string scenario_name = 2;
+  DeviceActionProto action = 3;
+  google.protobuf.Timestamp timestamp = 4;
 }

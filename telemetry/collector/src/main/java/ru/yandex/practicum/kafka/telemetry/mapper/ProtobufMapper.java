@@ -195,10 +195,7 @@ public class ProtobufMapper {
         var action = new DeviceAction();
         action.setSensorId(proto.getSensorId());
         action.setType(mapActionType(proto.getType()));
-        
-        if (proto.hasValue()) {
-            action.setValue(proto.getValue());
-        }
+        action.setValue(proto.getValue());
         
         return action;
     }
