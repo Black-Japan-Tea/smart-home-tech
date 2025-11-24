@@ -1,6 +1,7 @@
 package ru.yandex.practicum.kafka.telemetry.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -197,7 +198,7 @@ class ProtobufMapperTest {
     }
 
     @Test
-    void shouldUseDefaultValueForUnspecifiedDeviceType() {
+    void shouldThrowExceptionForUnspecifiedDeviceType() {
         Instant now = Instant.now();
         HubEventProto proto = HubEventProto.newBuilder()
             .setHubId("hub-1")
@@ -208,16 +209,13 @@ class ProtobufMapperTest {
                 .build())
             .build();
 
-        HubEvent dto = mapper.toDto(proto);
-
-        assertThat(dto).isInstanceOf(DeviceAddedEvent.class);
-        DeviceAddedEvent deviceEvent = (DeviceAddedEvent) dto;
-        // UNSPECIFIED должен быть заменен на TEMPERATURE_SENSOR по умолчанию
-        assertThat(deviceEvent.getDeviceType()).isEqualTo(DeviceType.TEMPERATURE_SENSOR);
+        assertThatThrownBy(() -> mapper.toDto(proto))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("unspecified");
     }
 
     @Test
-    void shouldUseDefaultValueForUnspecifiedConditionType() {
+    void shouldThrowExceptionForUnspecifiedConditionType() {
         Instant now = Instant.now();
         HubEventProto proto = HubEventProto.newBuilder()
             .setHubId("hub-1")
@@ -233,12 +231,9 @@ class ProtobufMapperTest {
                 .build())
             .build();
 
-        HubEvent dto = mapper.toDto(proto);
-
-        assertThat(dto).isInstanceOf(ScenarioAddedEvent.class);
-        ScenarioAddedEvent scenarioEvent = (ScenarioAddedEvent) dto;
-        // UNSPECIFIED должен быть заменен на TEMPERATURE по умолчанию
-        assertThat(scenarioEvent.getConditions().get(0).getType().toString()).isEqualTo("TEMPERATURE");
+        assertThatThrownBy(() -> mapper.toDto(proto))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("unspecified");
     }
 
     @Test

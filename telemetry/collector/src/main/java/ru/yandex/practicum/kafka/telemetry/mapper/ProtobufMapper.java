@@ -135,10 +135,8 @@ public class ProtobufMapper {
 
     private DeviceType mapDeviceType(DeviceTypeProto proto) {
         if (proto == DeviceTypeProto.DEVICE_TYPE_UNSPECIFIED || proto == DeviceTypeProto.UNRECOGNIZED) {
-            log.warn("Received device with unspecified type: {}. Using TEMPERATURE_SENSOR as default. " +
-                "This is a workaround for Hub Router bug - it should set enum values explicitly.", proto);
-            // Используем TEMPERATURE_SENSOR как наиболее распространенный тип по умолчанию
-            return DeviceType.TEMPERATURE_SENSOR;
+            log.error("Received device with unspecified or unrecognized type: {}", proto);
+            throw new IllegalArgumentException("Device type is unspecified or unrecognized: " + proto);
         }
         return switch (proto) {
             case MOTION_SENSOR -> DeviceType.MOTION_SENSOR;
@@ -152,10 +150,8 @@ public class ProtobufMapper {
 
     private ConditionType mapConditionType(ConditionTypeProto proto) {
         if (proto == ConditionTypeProto.CONDITION_TYPE_UNSPECIFIED || proto == ConditionTypeProto.UNRECOGNIZED) {
-            log.warn("Received condition with unspecified type: {}. Using TEMPERATURE as default. " +
-                "This is a workaround for Hub Router bug - it should set enum values explicitly.", proto);
-            // Используем TEMPERATURE как наиболее распространенный тип условия по умолчанию
-            return ConditionType.TEMPERATURE;
+            log.error("Received condition with unspecified or unrecognized type: {}", proto);
+            throw new IllegalArgumentException("Condition type is unspecified or unrecognized: " + proto);
         }
         return switch (proto) {
             case MOTION -> ConditionType.MOTION;
@@ -170,10 +166,8 @@ public class ProtobufMapper {
 
     private ConditionOperation mapConditionOperation(ConditionOperationProto proto) {
         if (proto == ConditionOperationProto.CONDITION_OPERATION_UNSPECIFIED || proto == ConditionOperationProto.UNRECOGNIZED) {
-            log.warn("Received condition with unspecified operation: {}. Using EQUALS as default. " +
-                "This is a workaround for Hub Router bug - it should set enum values explicitly.", proto);
-            // Используем EQUALS как наиболее распространенную операцию по умолчанию
-            return ConditionOperation.EQUALS;
+            log.error("Received condition with unspecified or unrecognized operation: {}", proto);
+            throw new IllegalArgumentException("Condition operation is unspecified or unrecognized: " + proto);
         }
         return switch (proto) {
             case EQUALS -> ConditionOperation.EQUALS;
@@ -185,10 +179,8 @@ public class ProtobufMapper {
 
     private ActionType mapActionType(ActionTypeProto proto) {
         if (proto == ActionTypeProto.ACTION_TYPE_UNSPECIFIED || proto == ActionTypeProto.UNRECOGNIZED) {
-            log.warn("Received action with unspecified type: {}. Using ACTIVATE as default. " +
-                "This is a workaround for Hub Router bug - it should set enum values explicitly.", proto);
-            // Используем ACTIVATE как наиболее распространенный тип действия по умолчанию
-            return ActionType.ACTIVATE;
+            log.error("Received action with unspecified or unrecognized type: {}", proto);
+            throw new IllegalArgumentException("Action type is unspecified or unrecognized: " + proto);
         }
         return switch (proto) {
             case ACTIVATE -> ActionType.ACTIVATE;

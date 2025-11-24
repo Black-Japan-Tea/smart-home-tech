@@ -53,41 +53,53 @@ public class GrpcEventController extends CollectorControllerGrpc.CollectorContro
                 log.info("DeviceAdded: hubId={}, id={}, type={} (number={})", 
                     request.getHubId(), deviceAdded.getId(), deviceAdded.getType(), deviceAdded.getType().getNumber());
                 
-                // UNSPECIFIED теперь обрабатывается в ProtobufMapper с использованием значений по умолчанию
-                // Просто логируем предупреждение
+                // Проверяем UNSPECIFIED до маппинга
                 if (deviceAdded.getType() == ru.yandex.practicum.grpc.telemetry.DeviceTypeProto.DEVICE_TYPE_UNSPECIFIED) {
-                    log.warn("Получено событие DEVICE_ADDED с UNSPECIFIED типом: hubId={}, deviceId={}. " +
-                        "Будет использован тип по умолчанию (TEMPERATURE_SENSOR). " +
-                        "Hub Router должен устанавливать enum значения явно.", 
+                    log.error("Получено событие DEVICE_ADDED с UNSPECIFIED типом: hubId={}, deviceId={}. " +
+                        "Hub Router не установил тип устройства явно. Событие не будет сохранено в Kafka.", 
                         request.getHubId(), deviceAdded.getId());
+                    responseObserver.onNext(Empty.getDefaultInstance());
+                    responseObserver.onCompleted();
+                    return;
                 }
             } else if (request.hasScenarioAdded()) {
                 var scenarioAdded = request.getScenarioAdded();
                 log.info("ScenarioAdded: hubId={}, name={}, conditions={}, actions={}", 
                     request.getHubId(), scenarioAdded.getName(), scenarioAdded.getConditionCount(), scenarioAdded.getActionCount());
                 
-                // Логируем предупреждения о UNSPECIFIED, но не пропускаем событие
-                // UNSPECIFIED теперь обрабатывается в ProtobufMapper с использованием значений по умолчанию
+                // Проверяем UNSPECIFIED в условиях и действиях
+                boolean hasUnspecified = false;
                 int conditionIndex = 0;
                 for (var condition : scenarioAdded.getConditionList()) {
                     if (condition.getType() == ru.yandex.practicum.grpc.telemetry.ConditionTypeProto.CONDITION_TYPE_UNSPECIFIED ||
                         condition.getOperation() == ru.yandex.practicum.grpc.telemetry.ConditionOperationProto.CONDITION_OPERATION_UNSPECIFIED) {
-                        log.warn("Найдено UNSPECIFIED в условии #{} сценария: hubId={}, name={}, sensorId={}, type={}, operation={}. " +
-                            "Будут использованы значения по умолчанию.", 
+                        hasUnspecified = true;
+                        log.error("Найдено UNSPECIFIED в условии #{} сценария: hubId={}, name={}, sensorId={}, type={}, operation={}", 
                             conditionIndex, request.getHubId(), scenarioAdded.getName(), 
                             condition.getSensorId(), condition.getType(), condition.getOperation());
+                        break;
                     }
                     conditionIndex++;
                 }
                 int actionIndex = 0;
                 for (var action : scenarioAdded.getActionList()) {
                     if (action.getType() == ru.yandex.practicum.grpc.telemetry.ActionTypeProto.ACTION_TYPE_UNSPECIFIED) {
-                        log.warn("Найдено UNSPECIFIED в действии #{} сценария: hubId={}, name={}, sensorId={}, type={}. " +
-                            "Будет использовано значение по умолчанию (ACTIVATE).", 
+                        hasUnspecified = true;
+                        log.error("Найдено UNSPECIFIED в действии #{} сценария: hubId={}, name={}, sensorId={}, type={}", 
                             actionIndex, request.getHubId(), scenarioAdded.getName(), 
                             action.getSensorId(), action.getType());
+                        break;
                     }
                     actionIndex++;
+                }
+                
+                if (hasUnspecified) {
+                    log.error("Пропускаем событие SCENARIO_ADDED с UNSPECIFIED значениями: hubId={}, name={}. " +
+                        "Hub Router не установил значения enum явно. Сценарий не будет сохранен в БД.", 
+                        request.getHubId(), scenarioAdded.getName());
+                    responseObserver.onNext(Empty.getDefaultInstance());
+                    responseObserver.onCompleted();
+                    return;
                 }
             }
             
