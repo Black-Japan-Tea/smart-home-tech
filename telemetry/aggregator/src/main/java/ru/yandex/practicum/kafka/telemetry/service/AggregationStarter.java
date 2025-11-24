@@ -115,7 +115,8 @@ public class AggregationStarter {
         
         if (snapshot == null) {
             // Если снапшота нет, создаем новый
-            log.debug("Создаем новый снапшот для хаба: {}", hubId);
+            log.info("Создаем новый снапшот для хаба {} (датчик {}, ts={})",
+                hubId, sensorId, event.getTimestamp());
             Map<String, SensorStateAvro> sensorsState = new HashMap<>();
             SensorStateAvro sensorState = createSensorState(event);
             sensorsState.put(sensorId, sensorState);
@@ -127,6 +128,7 @@ public class AggregationStarter {
                 .build();
             
             snapshots.put(hubId, snapshot);
+            log.info("Снапшот для хаба {} создан, всего датчиков: {}", hubId, sensorsState.size());
             return Optional.of(snapshot);
         }
         
@@ -156,6 +158,9 @@ public class AggregationStarter {
         }
         
         // Если дошли до сюда, значит пришли новые данные и снапшот нужно обновить
+        log.info("Обновляем состояние датчика {} в хабе {} (ts={})",
+            sensorId, hubId, event.getTimestamp());
+
         SensorStateAvro sensorState = createSensorState(event);
         sensorsState.put(sensorId, sensorState);
         
@@ -166,6 +171,7 @@ public class AggregationStarter {
             .build();
         
         snapshots.put(hubId, snapshot);
+        log.info("Снапшот для хаба {} обновлен, всего датчиков: {}", hubId, sensorsState.size());
         return Optional.of(snapshot);
     }
 
