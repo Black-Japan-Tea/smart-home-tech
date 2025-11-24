@@ -43,6 +43,9 @@ public class HubEventMapper {
         scenario.setConditions(new ArrayList<>());
         scenario.setActions(new ArrayList<>());
 
+        log.debug("Создаем сценарий: hubId={}, name={}, условий={}, действий={}", 
+            hubId, event.getName(), event.getConditions().size(), event.getActions().size());
+
         // Создаем условия
         for (ScenarioConditionAvro conditionAvro : event.getConditions()) {
             Condition condition = createOrGetCondition(conditionAvro);
@@ -55,6 +58,10 @@ public class HubEventMapper {
             scenarioCondition.setSensor(sensor);
             scenarioCondition.setCondition(condition);
             scenario.getConditions().add(scenarioCondition);
+            
+            log.debug("Добавлено условие: sensorId={}, type={}, operation={}, value={}", 
+                conditionAvro.getSensorId(), conditionAvro.getType(), 
+                conditionAvro.getOperation(), conditionAvro.getValue());
         }
 
         // Создаем действия
@@ -69,7 +76,13 @@ public class HubEventMapper {
             scenarioAction.setSensor(sensor);
             scenarioAction.setAction(action);
             scenario.getActions().add(scenarioAction);
+            
+            log.debug("Добавлено действие: sensorId={}, type={}, value={}", 
+                actionAvro.getSensorId(), actionAvro.getType(), actionAvro.getValue());
         }
+
+        log.debug("Сценарий создан: hubId={}, name={}, условий={}, действий={}", 
+            hubId, event.getName(), scenario.getConditions().size(), scenario.getActions().size());
 
         return scenario;
     }

@@ -53,14 +53,26 @@ public class HubRouterService {
             log.info("Отправляем действие в Hub Router: hubId={}, scenario={}, sensorId={}, type={}, value={}",
                 scenario.getHubId(), scenario.getName(), sensorId, action.getType(), action.getValue());
             
-            hubRouterClient.handleDeviceAction(request);
-            
-            log.info("Действие успешно отправлено в Hub Router: hubId={}, scenario={}, sensorId={}",
-                scenario.getHubId(), scenario.getName(), sensorId);
+            try {
+                hubRouterClient.handleDeviceAction(request);
+                log.info("Действие успешно отправлено в Hub Router: hubId={}, scenario={}, sensorId={}",
+                    scenario.getHubId(), scenario.getName(), sensorId);
+            } catch (io.grpc.StatusRuntimeException e) {
+                if (e.getStatus().getCode() == io.grpc.Status.Code.UNAVAILABLE) {
+                    log.warn("Hub Router недоступен, но действие было подготовлено: hubId={}, scenario={}, sensorId={}",
+                        scenario.getHubId(), scenario.getName(), sensorId);
+                    // Не бросаем исключение, чтобы не прерывать обработку других сценариев
+                } else {
+                    log.error("Ошибка при отправке действия в Hub Router: hubId={}, scenario={}, error={}", 
+                        scenario.getHubId(), scenario.getName(), e.getMessage(), e);
+                    throw e;
+                }
+            }
         } catch (Exception e) {
-            log.error("Error sending action to hub router for scenario {}: {}", 
+            log.error("Ошибка при отправке действия в Hub Router для сценария {}: {}", 
                 scenario.getName(), e.getMessage(), e);
-            throw new RuntimeException("Failed to send action to hub router", e);
+            // Не бросаем исключение, чтобы не прерывать обработку других сценариев
+            // throw new RuntimeException("Failed to send action to hub router", e);
         }
     }
 

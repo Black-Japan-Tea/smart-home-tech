@@ -42,17 +42,43 @@ public class HubEventProcessor implements Runnable {
             consumer.subscribe(Collections.singletonList(hubsTopic));
 
             log.info("Начинаем обработку событий от хабов");
+            
+            long lastLogTime = System.currentTimeMillis();
+            int pollCount = 0;
 
             while (true) {
                 ConsumerRecords<String, HubEventAvro> records = consumer.poll(Duration.ofMillis(100));
+                pollCount++;
+                
+                // Логируем каждые 10 секунд, что консьюмер работает
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastLogTime > 10000) {
+                    log.debug("Консьюмер hub-events работает, выполнено {} poll операций", pollCount);
+                    lastLogTime = currentTime;
+                }
+                
+                if (!records.isEmpty()) {
+                    log.info("Получено {} событий от хабов", records.count());
+                }
 
                 for (ConsumerRecord<String, HubEventAvro> record : records) {
-                    log.debug("Получено событие хаба: key={}, value={}", record.key(), record.value());
-                    processHubEvent(record.value());
+                    log.info("Получено событие хаба: key={}, hubId={}, offset={}, partition={}", 
+                        record.key(), 
+                        record.value() != null ? record.value().getHubId() : "null",
+                        record.offset(),
+                        record.partition());
+                    try {
+                        processHubEvent(record.value());
+                    } catch (Exception e) {
+                        log.error("Ошибка при обработке события хаба: key={}, offset={}", 
+                            record.key(), record.offset(), e);
+                    }
                 }
 
                 // Фиксируем смещения после обработки батча
-                consumer.commitSync();
+                if (!records.isEmpty()) {
+                    consumer.commitSync();
+                }
             }
 
         } catch (WakeupException ignored) {
@@ -88,7 +114,7 @@ public class HubEventProcessor implements Runnable {
     }
 
     @Transactional
-    private void handleDeviceAdded(String hubId, DeviceAddedEventAvro event) {
+    protected void handleDeviceAdded(String hubId, DeviceAddedEventAvro event) {
         try {
             Sensor sensor = hubEventMapper.toSensor(hubId, event);
             sensorRepository.save(sensor);
@@ -101,7 +127,7 @@ public class HubEventProcessor implements Runnable {
     }
 
     @Transactional
-    private void handleDeviceRemoved(String hubId, DeviceRemovedEventAvro event) {
+    protected void handleDeviceRemoved(String hubId, DeviceRemovedEventAvro event) {
         try {
             sensorRepository.deleteById(event.getId());
             log.info("Удалено устройство: hubId={}, deviceId={}", hubId, event.getId());
@@ -112,25 +138,28 @@ public class HubEventProcessor implements Runnable {
     }
 
     @Transactional
-    private void handleScenarioAdded(String hubId, ScenarioAddedEventAvro event) {
+    protected void handleScenarioAdded(String hubId, ScenarioAddedEventAvro event) {
         try {
             // Удаляем существующий сценарий с таким же именем, если есть
             scenarioRepository.findByHubIdAndName(hubId, event.getName())
                 .ifPresent(scenarioRepository::delete);
 
             Scenario scenario = hubEventMapper.toScenario(hubId, event);
-            log.debug("Создан сценарий перед сохранением: name={}, условий={}, действий={}", 
-                scenario.getName(), scenario.getConditions().size(), scenario.getActions().size());
+            log.info("Создан сценарий перед сохранением: name={}, условий={}, действий={}", 
+                scenario.getName(), 
+                scenario.getConditions() != null ? scenario.getConditions().size() : 0, 
+                scenario.getActions() != null ? scenario.getActions().size() : 0);
             
-            Scenario saved = scenarioRepository.save(scenario);
+            scenarioRepository.saveAndFlush(scenario);
             
-            // Перезагружаем сценарий, чтобы убедиться, что связи загружены
-            Scenario reloaded = scenarioRepository.findById(saved.getId())
+            // Перезагружаем сценарий через findByHubIdAndName, чтобы использовать JOIN FETCH
+            Scenario reloaded = scenarioRepository.findByHubIdAndName(hubId, event.getName())
                 .orElseThrow(() -> new IllegalStateException("Сценарий не найден после сохранения"));
             
             log.info("Добавлен сценарий: hubId={}, name={}, id={}, условий={}, действий={}", 
                 hubId, event.getName(), reloaded.getId(), 
-                reloaded.getConditions().size(), reloaded.getActions().size());
+                reloaded.getConditions() != null ? reloaded.getConditions().size() : 0, 
+                reloaded.getActions() != null ? reloaded.getActions().size() : 0);
         } catch (Exception e) {
             log.error("Ошибка при добавлении сценария: hubId={}, name={}", 
                 hubId, event.getName(), e);
@@ -139,7 +168,7 @@ public class HubEventProcessor implements Runnable {
     }
 
     @Transactional
-    private void handleScenarioRemoved(String hubId, ScenarioRemovedEventAvro event) {
+    protected void handleScenarioRemoved(String hubId, ScenarioRemovedEventAvro event) {
         try {
             scenarioRepository.findByHubIdAndName(hubId, event.getName())
                 .ifPresent(scenarioRepository::delete);

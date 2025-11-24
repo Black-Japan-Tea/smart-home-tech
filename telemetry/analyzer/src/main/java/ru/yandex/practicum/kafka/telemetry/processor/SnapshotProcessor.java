@@ -43,17 +43,43 @@ public class SnapshotProcessor {
             consumer.subscribe(Collections.singletonList(snapshotsTopic));
 
             log.info("Начинаем обработку снапшотов");
+            
+            long lastLogTime = System.currentTimeMillis();
+            int pollCount = 0;
 
             while (true) {
                 ConsumerRecords<String, SensorsSnapshotAvro> records = consumer.poll(Duration.ofMillis(100));
+                pollCount++;
+                
+                // Логируем каждые 10 секунд, что консьюмер работает
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastLogTime > 10000) {
+                    log.debug("Консьюмер snapshots работает, выполнено {} poll операций", pollCount);
+                    lastLogTime = currentTime;
+                }
+                
+                if (!records.isEmpty()) {
+                    log.info("Получено {} снапшотов", records.count());
+                }
 
                 for (ConsumerRecord<String, SensorsSnapshotAvro> record : records) {
-                    log.debug("Получен снапшот: key={}, hubId={}", record.key(), record.value().getHubId());
-                    processSnapshot(record.value());
+                    log.info("Получен снапшот: key={}, hubId={}, offset={}, partition={}", 
+                        record.key(), 
+                        record.value() != null ? record.value().getHubId() : "null",
+                        record.offset(),
+                        record.partition());
+                    try {
+                        processSnapshot(record.value());
+                    } catch (Exception e) {
+                        log.error("Ошибка при обработке снапшота: key={}, offset={}", 
+                            record.key(), record.offset(), e);
+                    }
                 }
 
                 // Фиксируем смещения после обработки батча
-                consumer.commitSync();
+                if (!records.isEmpty()) {
+                    consumer.commitSync();
+                }
             }
 
         } catch (WakeupException ignored) {
@@ -75,19 +101,39 @@ public class SnapshotProcessor {
         String hubId = snapshot.getHubId();
         log.info("Обрабатываем снапшот для хаба: {}, количество датчиков: {}", 
             hubId, snapshot.getSensorsState().size());
+        
+        // Логируем все датчики в снапшоте
+        snapshot.getSensorsState().forEach((sensorId, state) -> {
+            log.debug("Датчик в снапшоте: id={}, data type={}", 
+                sensorId, state.getData() != null ? state.getData().getClass().getSimpleName() : "null");
+        });
 
         // Загружаем все сценарии для данного хаба
         List<Scenario> scenarios = scenarioRepository.findByHubId(hubId);
 
         if (scenarios.isEmpty()) {
-            log.debug("Нет сценариев для хаба: {}", hubId);
+            log.warn("Нет сценариев для хаба: {}", hubId);
             return;
         }
 
         log.info("Проверяем {} сценариев для хаба: {}", scenarios.size(), hubId);
         for (Scenario scenario : scenarios) {
-            log.debug("Проверяем сценарий: {} (условий: {}, действий: {})", 
-                scenario.getName(), scenario.getConditions().size(), scenario.getActions().size());
+            log.info("Проверяем сценарий: {} (условий: {}, действий: {})", 
+                scenario.getName(), 
+                scenario.getConditions() != null ? scenario.getConditions().size() : 0, 
+                scenario.getActions() != null ? scenario.getActions().size() : 0);
+            
+            // Логируем детали условий
+            if (scenario.getConditions() != null) {
+                scenario.getConditions().forEach(sc -> {
+                    log.debug("Условие сценария {}: sensorId={}, type={}, operation={}, value={}", 
+                        scenario.getName(),
+                        sc.getSensor() != null ? sc.getSensor().getId() : "null",
+                        sc.getCondition() != null ? sc.getCondition().getType() : "null",
+                        sc.getCondition() != null ? sc.getCondition().getOperation() : "null",
+                        sc.getCondition() != null ? sc.getCondition().getValue() : "null");
+                });
+            }
         }
 
         // Проверяем каждый сценарий

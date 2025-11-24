@@ -25,34 +25,60 @@ public class ScenarioEvaluationService {
     public List<ScenarioAction> evaluateScenario(Scenario scenario, SensorsSnapshotAvro snapshot) {
         Map<String, SensorStateAvro> sensorsState = snapshot.getSensorsState();
         
-        log.debug("Проверяем сценарий {}: {} условий", scenario.getName(), scenario.getConditions().size());
+        if (scenario.getConditions() == null || scenario.getConditions().isEmpty()) {
+            log.warn("Сценарий {} не имеет условий", scenario.getName());
+            return List.of();
+        }
+        
+        log.info("Проверяем сценарий {}: {} условий", scenario.getName(), scenario.getConditions().size());
         
         // Проверяем, что все условия сценария выполнены
         boolean allConditionsMet = scenario.getConditions().stream()
             .allMatch(scenarioCondition -> {
+                if (scenarioCondition == null) {
+                    log.warn("Найдено null условие в сценарии {}", scenario.getName());
+                    return false;
+                }
+                
                 Sensor sensor = scenarioCondition.getSensor();
                 Condition condition = scenarioCondition.getCondition();
+                
+                if (sensor == null) {
+                    log.warn("Sensor is null в условии сценария {}", scenario.getName());
+                    return false;
+                }
+                
+                if (condition == null) {
+                    log.warn("Condition is null в условии сценария {}", scenario.getName());
+                    return false;
+                }
+                
                 SensorStateAvro sensorState = sensorsState.get(sensor.getId());
                 
                 if (sensorState == null) {
-                    log.debug("Sensor {} not found in snapshot for scenario {}", 
+                    log.warn("Датчик {} не найден в снапшоте для сценария {}", 
                         sensor.getId(), scenario.getName());
                     return false;
                 }
                 
                 boolean result = evaluateCondition(condition, sensorState);
-                log.debug("Условие для датчика {} (type={}, operation={}, value={}): {}", 
+                log.info("Условие для датчика {} (type={}, operation={}, value={}): {}", 
                     sensor.getId(), condition.getType(), condition.getOperation(), 
                     condition.getValue(), result);
                 return result;
             });
         
         if (allConditionsMet) {
+            if (scenario.getActions() == null || scenario.getActions().isEmpty()) {
+                log.warn("Все условия выполнены для сценария {}, но нет действий для выполнения", 
+                    scenario.getName());
+                return List.of();
+            }
             log.info("Все условия выполнены для сценария {} в хабе {}, выполняем {} действий", 
                 scenario.getName(), scenario.getHubId(), scenario.getActions().size());
             return scenario.getActions();
         } else {
-            log.debug("Не все условия выполнены для сценария {} в хабе {}", 
+            log.info("Не все условия выполнены для сценария {} в хабе {}", 
                 scenario.getName(), scenario.getHubId());
         }
         
