@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: aggregator
+  kafka:
+    bootstrap-servers: localhost:9092
+
+aggregator:
+  kafka:
+    topics:
+      sensors: telemetry.sensors.v1
+      snapshots: telemetry.snapshots.v1
+    consumer:
+      group-id: aggregator-group
+
+logging:
+  level:
+    ru.yandex.practicum.kafka.telemetry: INFO
+

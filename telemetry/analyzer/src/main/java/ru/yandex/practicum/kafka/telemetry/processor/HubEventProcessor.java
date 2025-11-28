@@ -5,8 +5,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.kafka.telemetry.config.AnalyzerKafkaProperties;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.service.HubEventService;
 
@@ -17,19 +17,18 @@ import java.util.Collections;
 @Component
 public class HubEventProcessor implements Runnable {
 
-    @Value("${kafka.topics.hubs:telemetry.hubs.v1}")
-    private String hubsTopic;
-
-    @Value("${kafka.consumer.poll-timeout-ms:500}")
-    private long pollTimeoutMs;
-
+    private final String hubsTopic;
+    private final long pollTimeoutMs;
     private final KafkaConsumer<String, HubEventAvro> consumer;
     private final HubEventService hubEventService;
 
     public HubEventProcessor(KafkaConsumer<String, HubEventAvro> consumer,
-                             HubEventService hubEventService) {
+                              HubEventService hubEventService,
+                              AnalyzerKafkaProperties analyzerKafkaProperties) {
         this.consumer = consumer;
         this.hubEventService = hubEventService;
+        this.hubsTopic = analyzerKafkaProperties.getTopics().getHubs();
+        this.pollTimeoutMs = analyzerKafkaProperties.getConsumer().getPollTimeoutMs();
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
     }
 

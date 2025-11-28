@@ -5,9 +5,9 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.DeviceActionRequest;
+import ru.yandex.practicum.kafka.telemetry.config.AnalyzerKafkaProperties;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.kafka.telemetry.service.DeviceActionDispatcher;
 import ru.yandex.practicum.kafka.telemetry.service.ScenarioEvaluationService;
@@ -22,29 +22,28 @@ import java.util.List;
 @Component
 public class SnapshotProcessor {
 
-    @Value("${kafka.topics.snapshots:telemetry.snapshots.v1}")
-    private String snapshotsTopic;
-
-    @Value("${kafka.consumer.poll-timeout-ms:500}")
-    private long pollTimeoutMs;
-
+    private final String snapshotsTopic;
+    private final long pollTimeoutMs;
     private final KafkaConsumer<String, SensorsSnapshotAvro> consumer;
     private final ScenarioService scenarioService;
     private final ScenarioEvaluationService evaluationService;
     private final DeviceActionDispatcher dispatcher;
 
-    private volatile boolean running = true;
-
     public SnapshotProcessor(KafkaConsumer<String, SensorsSnapshotAvro> consumer,
                              ScenarioService scenarioService,
                              ScenarioEvaluationService evaluationService,
-                             DeviceActionDispatcher dispatcher) {
+                             DeviceActionDispatcher dispatcher,
+                             AnalyzerKafkaProperties analyzerKafkaProperties) {
         this.consumer = consumer;
         this.scenarioService = scenarioService;
         this.evaluationService = evaluationService;
         this.dispatcher = dispatcher;
+        this.snapshotsTopic = analyzerKafkaProperties.getTopics().getSnapshots();
+        this.pollTimeoutMs = analyzerKafkaProperties.getConsumer().getPollTimeoutMs();
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
     }
+
+    private volatile boolean running = true;
 
     public void start() {
         try {

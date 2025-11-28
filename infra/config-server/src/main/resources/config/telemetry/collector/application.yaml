@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: collector
+  kafka:
+    bootstrap-servers: localhost:9092
+
+collector:
+  kafka:
+    topics:
+      sensors: telemetry.sensors.v1
+      hubs: telemetry.hubs.v1
+
+grpc:
+  server:
+    port: 59091
+
+logging:
+  level:
+    ru.yandex.practicum.kafka.telemetry: DEBUG
+

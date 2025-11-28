@@ -7,8 +7,8 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.kafka.telemetry.config.AggregatorKafkaProperties;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorStateAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
@@ -24,19 +24,18 @@ import java.util.Optional;
 @Component
 public class AggregationStarter {
 
-    @Value("${kafka.topics.sensors:telemetry.sensors.v1}")
-    private String sensorsTopic;
-
-    @Value("${kafka.topics.snapshots:telemetry.snapshots.v1}")
-    private String snapshotsTopic;
-
+    private final String sensorsTopic;
+    private final String snapshotsTopic;
     private final KafkaConsumer<String, SensorEventAvro> consumer;
     private final KafkaProducer<String, SensorsSnapshotAvro> producer;
 
     public AggregationStarter(KafkaConsumer<String, SensorEventAvro> consumer,
-                              KafkaProducer<String, SensorsSnapshotAvro> producer) {
+                              KafkaProducer<String, SensorsSnapshotAvro> producer,
+                              AggregatorKafkaProperties aggregatorKafkaProperties) {
         this.consumer = consumer;
         this.producer = producer;
+        this.sensorsTopic = aggregatorKafkaProperties.getTopics().getSensors();
+        this.snapshotsTopic = aggregatorKafkaProperties.getTopics().getSnapshots();
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
     }
 
