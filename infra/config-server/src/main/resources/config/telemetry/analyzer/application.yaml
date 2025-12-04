@@ -20,6 +20,11 @@ spring:
       mode: always
       schema-locations: classpath:schema.sql
 
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname:localhost}:${eureka.instance.port:8761}/eureka/
+
 analyzer:
   kafka:
     topics:
