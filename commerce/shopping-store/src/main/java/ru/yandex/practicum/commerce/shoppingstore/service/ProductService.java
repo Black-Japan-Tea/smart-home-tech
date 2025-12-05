@@ -30,12 +30,10 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
 
-    public List<ProductDto> getProducts(ProductCategory category, int page, int size, List<String> sort) {
+    public org.springframework.data.domain.Page<ProductDto> getProducts(ProductCategory category, int page, int size, List<String> sort) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), calculateSize(size), parseSort(sort));
         return productRepository.findAllByProductCategoryAndProductState(category, ProductState.ACTIVE, pageable)
-                .stream()
-                .map(productMapper::toDto)
-                .toList();
+                .map(productMapper::toDto);
     }
 
     public ProductDto getProduct(UUID productId) {
@@ -77,14 +75,16 @@ public class ProductService {
 
     @Transactional
     public boolean setProductQuantityState(SetProductQuantityStateRequest request) {
-        ProductEntity entity = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException(request.getProductId()));
-        entity.setQuantityState(request.getQuantityState());
-        return true;
+        return productRepository.findById(request.getProductId())
+                .map(entity -> {
+                    entity.setQuantityState(request.getQuantityState());
+                    return true;
+                })
+                .orElse(false);
     }
 
     private int calculateSize(int size) {
-        return size > 0 ? Math.min(size, 100) : DEFAULT_PAGE_SIZE;
+        return size > 0 ? size : DEFAULT_PAGE_SIZE;
     }
 
     private Sort parseSort(List<String> sortParams) {
@@ -92,23 +92,46 @@ public class ProductService {
             return Sort.unsorted();
         }
 
-        return sortParams.stream()
-                .map(this::createOrder)
-                .reduce(Sort::and)
-                .orElse(Sort.unsorted());
-    }
-
-    private Sort createOrder(String parameter) {
-        if (parameter == null || parameter.isBlank()) {
-            return Sort.unsorted();
+        List<Sort.Order> orders = new java.util.ArrayList<>();
+        String currentProperty = null;
+        
+        for (String param : sortParams) {
+            if (param == null || param.isBlank()) {
+                continue;
+            }
+            
+            if (param.contains(",")) {
+                String[] parts = param.split(",", 2);
+                String property = parts[0].trim();
+                String directionStr = parts.length > 1 ? parts[1].trim() : "";
+                Sort.Direction direction = "desc".equalsIgnoreCase(directionStr)
+                        ? Sort.Direction.DESC
+                        : Sort.Direction.ASC;
+                orders.add(new Sort.Order(direction, property));
+                currentProperty = null;
+            } else {
+                if ("asc".equalsIgnoreCase(param) || "desc".equalsIgnoreCase(param)) {
+                    if (currentProperty != null) {
+                        Sort.Direction direction = "desc".equalsIgnoreCase(param)
+                                ? Sort.Direction.DESC
+                                : Sort.Direction.ASC;
+                        orders.add(new Sort.Order(direction, currentProperty));
+                        currentProperty = null;
+                    }
+                } else {
+                    if (currentProperty != null) {
+                        orders.add(new Sort.Order(Sort.Direction.ASC, currentProperty));
+                    }
+                    currentProperty = param.trim();
+                }
+            }
         }
-
-        String[] parts = parameter.split(",");
-        String property = parts[0].trim();
-        Sort.Direction direction = parts.length > 1 && "desc".equalsIgnoreCase(parts[1])
-                ? Sort.Direction.DESC
-                : Sort.Direction.ASC;
-        return Sort.by(direction, property);
+        
+        if (currentProperty != null) {
+            orders.add(new Sort.Order(Sort.Direction.ASC, currentProperty));
+        }
+        
+        return orders.isEmpty() ? Sort.unsorted() : Sort.by(orders);
     }
 }
 

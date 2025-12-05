@@ -48,7 +48,7 @@ public class ShoppingCartEntity {
     @OneToMany(mappedBy = "shoppingCart",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
-            fetch = FetchType.LAZY)
+            fetch = FetchType.EAGER)
     private List<ShoppingCartItemEntity> items = new ArrayList<>();
 
     @PrePersist

@@ -39,26 +39,30 @@ public class ShoppingCartService {
     @Transactional
     public ShoppingCartDto addProductToShoppingCart(String username, Map<UUID, Long> products) {
         ShoppingCartEntity cart = findOrCreateActiveCart(username);
+        ShoppingCartEntity finalCart = cart;
         products.forEach((productId, quantity) -> {
             validateQuantity(quantity);
-            upsertItem(cart, productId, quantity);
+            upsertItem(finalCart, productId, quantity);
         });
 
         validateWithWarehouse(cart);
+        cart = shoppingCartRepository.save(cart);
         return shoppingCartMapper.toDto(cart);
     }
 
     @Transactional
     public ShoppingCartDto removeFromShoppingCart(String username, List<UUID> productIds) {
         ShoppingCartEntity cart = findOrCreateActiveCart(username);
+        ShoppingCartEntity finalCart = cart;
         boolean removed = productIds.stream()
-                .map(productId -> removeItem(cart, productId))
+                .map(productId -> removeItem(finalCart, productId))
                 .reduce(Boolean::logicalOr)
                 .orElse(false);
 
         if (!removed) {
             throw new NoProductsInShoppingCartException();
         }
+        cart = shoppingCartRepository.save(cart);
         return shoppingCartMapper.toDto(cart);
     }
 
@@ -75,6 +79,7 @@ public class ShoppingCartService {
         }
 
         validateWithWarehouse(cart);
+        cart = shoppingCartRepository.save(cart);
         return shoppingCartMapper.toDto(cart);
     }
 

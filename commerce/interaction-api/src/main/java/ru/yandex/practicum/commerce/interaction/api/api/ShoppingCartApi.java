@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -20,8 +19,9 @@ import ru.yandex.practicum.commerce.interaction.api.dto.ChangeProductQuantityReq
 import ru.yandex.practicum.commerce.interaction.api.dto.ShoppingCartDto;
 
 @Validated
-@RequestMapping("/api/v1/shopping-cart")
 public interface ShoppingCartApi {
+
+    String API_PATH = "/api/v1/shopping-cart";
 
     @GetMapping
     ShoppingCartDto getShoppingCart(@RequestParam("username") @NotBlank String username);
@@ -35,7 +35,7 @@ public interface ShoppingCartApi {
 
     @PostMapping("/remove")
     ShoppingCartDto removeFromShoppingCart(@RequestParam("username") @NotBlank String username,
-                                           @RequestBody @NotEmpty List<UUID> productIds);
+                                           @RequestBody List<UUID> productIds);
 
     @PostMapping("/change-quantity")
     ShoppingCartDto changeProductQuantity(@RequestParam("username") @NotBlank String username,

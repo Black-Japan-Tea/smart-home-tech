@@ -30,7 +30,7 @@ public class ProductMapper {
         entity.setDescription(dto.getDescription());
         entity.setImageSrc(dto.getImageSrc());
         entity.setQuantityState(dto.getQuantityState());
-        entity.setProductState(dto.getProductState() == null ? ProductState.ACTIVE : dto.getProductState());
+        entity.setProductState(ProductState.ACTIVE);
         entity.setProductCategory(dto.getProductCategory());
         entity.setPrice(dto.getPrice());
         return entity;

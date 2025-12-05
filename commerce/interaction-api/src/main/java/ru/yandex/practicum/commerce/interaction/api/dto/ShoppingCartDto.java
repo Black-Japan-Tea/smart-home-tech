@@ -22,6 +22,6 @@ public class ShoppingCartDto {
 
     @Builder.Default
     @NotNull
-    private Map<UUID, Long> products = Collections.emptyMap();
+    private Map<UUID, Long> products = new java.util.LinkedHashMap<>();
 }
 

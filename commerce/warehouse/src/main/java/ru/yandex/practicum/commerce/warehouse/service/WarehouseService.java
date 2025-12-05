@@ -9,7 +9,6 @@ import ru.yandex.practicum.commerce.interaction.api.dto.BookedProductsDto;
 import ru.yandex.practicum.commerce.interaction.api.dto.DimensionDto;
 import ru.yandex.practicum.commerce.interaction.api.dto.NewProductInWarehouseRequest;
 import ru.yandex.practicum.commerce.interaction.api.dto.QuantityState;
-import ru.yandex.practicum.commerce.interaction.api.dto.SetProductQuantityStateRequest;
 import ru.yandex.practicum.commerce.interaction.api.dto.ShoppingCartDto;
 import ru.yandex.practicum.commerce.warehouse.client.ShoppingStoreClient;
 import ru.yandex.practicum.commerce.warehouse.exception.NoSpecifiedProductInWarehouseException;
@@ -58,7 +57,7 @@ public class WarehouseService {
     }
 
     public BookedProductsDto checkProductQuantityEnoughForShoppingCart(ShoppingCartDto shoppingCartDto) {
-        if (shoppingCartDto == null || shoppingCartDto.getProducts().isEmpty()) {
+        if (shoppingCartDto == null || shoppingCartDto.getProducts() == null || shoppingCartDto.getProducts().isEmpty()) {
             return BookedProductsDto.builder()
                     .deliveryVolume(BigDecimal.ZERO)
                     .deliveryWeight(BigDecimal.ZERO)
@@ -107,10 +106,12 @@ public class WarehouseService {
 
     private void notifyStore(WarehouseProductEntity entity) {
         try {
-            shoppingStoreClient.setProductQuantityState(SetProductQuantityStateRequest.builder()
-                    .productId(entity.getProductId())
-                    .quantityState(resolveQuantityState(entity.getQuantity()))
-                    .build());
+            ru.yandex.practicum.commerce.interaction.api.dto.SetProductQuantityStateRequest request =
+                    ru.yandex.practicum.commerce.interaction.api.dto.SetProductQuantityStateRequest.builder()
+                            .productId(entity.getProductId())
+                            .quantityState(resolveQuantityState(entity.getQuantity()))
+                            .build();
+            shoppingStoreClient.setProductQuantityState(null, null, request);
         } catch (Exception ex) {
             log.warn("Failed to synchronize quantity state with shopping-store for product {}", entity.getProductId(), ex);
         }

@@ -15,13 +15,19 @@ public class ShoppingCartMapper {
         if (entity == null) {
             return null;
         }
-        Map<java.util.UUID, Long> products = entity.getItems().stream()
-                .collect(Collectors.toMap(
-                        item -> item.getProductId(),
-                        item -> item.getQuantity(),
-                        Long::sum,
-                        LinkedHashMap::new
-                ));
+        
+        Map<java.util.UUID, Long> products;
+        if (entity.getItems() == null || entity.getItems().isEmpty()) {
+            products = new LinkedHashMap<>();
+        } else {
+            products = entity.getItems().stream()
+                    .collect(Collectors.toMap(
+                            item -> item.getProductId(),
+                            item -> item.getQuantity(),
+                            Long::sum,
+                            LinkedHashMap::new
+                    ));
+        }
 
         return ShoppingCartDto.builder()
                 .shoppingCartId(entity.getShoppingCartId())
