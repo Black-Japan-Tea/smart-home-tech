@@ -5,8 +5,8 @@ spring:
   application:
     name: shopping-cart
   datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:shopping-cart;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5433/commerce_shopping_cart
     username: cart
     password: cart
   jpa:
@@ -16,6 +16,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 feign:
   circuitbreaker:
