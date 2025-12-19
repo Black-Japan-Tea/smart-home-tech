@@ -5,10 +5,10 @@ spring:
   application:
     name: shopping-store
   datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5433/commerce_shopping_store
-    username: store
-    password: store
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:shoppingstore;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
   jpa:
     hibernate:
       ddl-auto: update
@@ -17,6 +17,9 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  h2:
+    console:
+      enabled: false
 
 eureka:
   client:

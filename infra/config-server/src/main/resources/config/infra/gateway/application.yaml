@@ -16,10 +16,15 @@ spring:
             - Path=/shopping-store/**
           filters:
             - PrefixPath=/api/v1
-            - Retry:
+            - name: Retry
+              args:
                 retries: 3
-                statuses: NOT_FOUND
-                methods: GET,POST,PUT
+                statuses:
+                  - NOT_FOUND
+                methods:
+                  - GET
+                  - POST
+                  - PUT
                 backoff:
                   firstBackoff: 50ms
                   maxBackoff: 500ms
